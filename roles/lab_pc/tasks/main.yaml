@@ -1,0 +1,131 @@
+- name: install the base ubuntu desktop
+  apt:
+    name: ubuntu-desktop
+    state: present
+
+- name: remove initial setup
+  template:
+    src: custom.conf
+    dest: /etc/gdm3/custom.conf
+
+- name: ubuntu keyboard crap (because let's not use localectl)
+  template:
+    src: keyboard
+    dest: /etc/default/keyboard
+
+- name: generate user
+  user:
+    name: aluno
+    # aluno
+    password: "$6$NiUqUzQ0x90vK$5TkY6EJBahH6JvzponvWq0AMiex/kgVYPDfNWBswACwA5AXLKTPdpDOnNBtwdGiTds/RcJCB6kh6BzSenFOiz/"
+    state: present
+    createhome: yes
+    shell: /bin/bash
+    skeleton: "/etc/skel"
+  notify:
+    - restart gdm
+
+- name: generate sudo group
+  group:
+    name: sudo
+    state: present
+    system: yes
+
+- name: generate admin user
+  user:
+    name: admin
+    password: "$6$Thh7hA6e$h0eaiCJejXqgTV5P/ohad28tq0SG5TV/me5S7nctd.H0v9d2/n9VfMphG0eQGmyV8evHeYB7EUsmEW2nMsIDQ."
+    state: present
+    createhome: yes
+    shell: /bin/bash
+    skeleton: "/etc/skel"
+    groups: "sudo,"
+
+
+- name: install developer packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - gnome-calculator
+    - screen
+    - htop
+    - git
+    - vim
+    - graphviz
+    - meld
+    - build-essential
+    - gdb
+    - cgdb
+    - valgrind
+    - cmake
+    - libsdl2-dev
+    - libsdl2-image-dev
+    - libsdl2-mixer-dev
+    - libsdl2-ttf-dev
+    - default-jre
+    - default-jdk
+    - python3-pip
+    - texlive
+    - texlive-latex-extra
+    - pandoc
+    # broken, debian bug 891956
+#        - eclipse
+    - swi-prolog
+    - postgresql
+    - obs-studio
+    - pitivi
+    - sshfs
+    - bison
+    - flex
+    - wxmaxima
+    - gnome-system-monitor
+
+- name: copy login and logoff executables
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+  with_items:
+    - ./login
+    - ./logoff
+
+- name: network login
+  shell: "chmod +x /tmp/login; /tmp/login"
+
+- name: install eclipse (snap)
+  shell: "snap install --classic eclipse"
+
+- name: install sublime text (snap)
+  shell: "snap install --classic sublime-text"
+
+#- name: install intellij idea (snap)
+#  shell: "snap install --classic intellij-idea-community"
+
+- name: transfer julia snap
+  copy:
+    src: julia.snap
+    dest: /tmp
+
+- name: install julia snap
+  shell: "snap install --classic --dangerous /tmp/julia.snap"
+
+- name: network logoff
+  shell: "chmod +x /tmp/logoff; /tmp/logoff"
+
+- name: remove stock netboot netplan
+  file:
+    state: absent
+    path: "/etc/netplan/01-netcfg.yaml"
+
+- name: copy network manager netplan
+  copy:
+    src: ./01-network-manager-all.yaml
+    dest: /etc/netplan/01-network-manager-all.yaml
+
+- name: remove network executables
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - /tmp/login
+    - /tmp/logoff
