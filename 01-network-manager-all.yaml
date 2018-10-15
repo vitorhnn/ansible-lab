@@ -1,0 +1,5 @@
+# Let NetworkManager manage all devices on this system
+# this is not stock on the netboot. added via ansible
+network:
+  version: 2
+  renderer: NetworkManager
