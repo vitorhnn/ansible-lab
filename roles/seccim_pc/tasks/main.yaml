@@ -1,0 +1,26 @@
+- name: generate seccim user
+  user:
+    name: seccim
+    password: "$6$1zAWh1.XLa$8MnfSu7Fn2hBJpDt1sKw9cI4ocMH914JJwwE8lObotDE11xPTn1oI4C0pSF6myWNf8o6dORTrHN7zD9msVC8f1"
+    state: present
+    createhome: yes
+    shell: /bin/bash
+    skeleton: "/etc/skel"
+    groups: "sudo,"
+
+- name: copy login and logoff executables
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+  with_items:
+    - ./login
+    - ./logoff
+
+- name: network login
+  shell: "chmod +x /tmp/login; /tmp/login"
+
+- name: install android studio
+  shell: "snap install --classic android-studio"
+
+- name: network logoff
+  shell: "chmod +x /tmp/logoff; /tmp/logoff"
